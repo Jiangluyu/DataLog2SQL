@@ -10,7 +10,7 @@
 | LinkedHashMap\<String, List\<String\>\> | tNameAndCName   | {表1=\[属性1，属性2，...\], 表2=\[属性1，属性2，...]} |
 | LinkedHashMap<String, Integer>          | tNameAndAttrNum | {表1=属性数1, 表2=属性数2}                            |
 
-### 
+
 
 ## DatalogProblemTypeParser
 
