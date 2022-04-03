@@ -1,0 +1,16 @@
+% Customer(cName, cAge)
+% Seller(sName)
+Customer('John', 17).
+Customer('Robert', 18).
+Customer('Donne', 20).
+Seller('Jake', 22).
+Seller('Robert', 18).
+Seller('Donne', 20).
+PROJECTION_RULE(cName) :- Customer(cName).
+SELECTION_RULE(cName) :- Customer(cName), cName = 'Jake'.
+INNER_JOIN_RULE(cName) :- ij(Customer(cName), Seller(sName), cName = sName).
+LEFT_JOIN_RULE(cName, sName) :- lj(Customer(cName), Seller(sName), cName = sName).
+RIGHT_JOIN_RULE(cName, sName) :- rj(Customer(cName), Seller(sName), cName = sName).
+FULL_JOIN_RULE(cName, sName) :- fj(Customer(cName), Seller(sName), cName = sName).
+UNION_RULE(cName, sName) :- Customer(cName); Seller(sName).
+DIFFERENCE_RULE(cName) :- Customer(cName), not Seller(cName).
