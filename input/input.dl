@@ -3,10 +3,11 @@
 Customer('John', 17).
 Customer('Robert', 18).
 Customer('Donne', 20).
-Seller('Jake', 22).
-Seller('Robert', 18).
-Seller('Donne', 20).
+Seller('Jake').
+Seller('Robert').
+Seller('Donne').
 PROJECTION_RULE(cName) :- Customer(cName).
+PROJECTION_RULE2(cName, cAge) :- Customer(cName, cAge).
 SELECTION_RULE(cName) :- Customer(cName), cName = 'Jake'.
 INNER_JOIN_RULE(cName) :- ij(Customer(cName), Seller(sName), cName = sName).
 LEFT_JOIN_RULE(cName, sName) :- lj(Customer(cName), Seller(sName), cName = sName).

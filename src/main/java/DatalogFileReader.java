@@ -9,7 +9,7 @@ public class DatalogFileReader {
     private final LinkedHashMap<String, List<String>> tNameAndCName = new LinkedHashMap<>();
     private final LinkedHashMap<String, Integer> tNameAndAttrNum = new LinkedHashMap<>();
 
-    DatalogFileReader(String filePath) throws IOException {
+    DatalogFileReader(String filePath) {
         this.filePath = "input/" + filePath;
     }
 

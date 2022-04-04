@@ -17,16 +17,16 @@ public class DatalogProblemTypeParser {
         if (!query.contains(":-")) {
             problemType = "facts";
         } else {
-            if (joinWords.contains(query.split(":-")[0].split("\\(")[0])) {
-                problemType = query.split(":-")[0].split("\\(")[0];
+            if (joinWords.contains(query.split(":-")[1].split("\\(")[0])) {
+                problemType = "join";
             } else if (query.contains(";")) {
                 problemType = "union";
+            } else if (query.contains("group_by")) {
+                problemType = "groupby";
             } else if (query.contains("<") || query.contains(">") || query.contains("=")) {
                 problemType = "select";
             } else if (query.contains("not")) {
                 problemType = "difference";
-            } else if (query.contains("group_by")) {
-                problemType = "group_by";
             } else {
                 problemType = "projection";
             }

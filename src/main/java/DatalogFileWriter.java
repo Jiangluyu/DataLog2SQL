@@ -8,7 +8,7 @@ public class DatalogFileWriter {
     private final String filePath;
     private final List<String> sqls;
 
-    DatalogFileWriter(String filePath, List<String> queries) throws IOException {
+    DatalogFileWriter(String filePath, List<String> queries) {
         this.filePath = "output/" + filePath;
         this.sqls = queries;
     }
@@ -24,12 +24,15 @@ public class DatalogFileWriter {
         boolean fileCreateState = file.createNewFile();
         if (fileCreateState) {
             System.out.println("File " + this.filePath + " created.");
+        } else {
+            System.out.println("File " + this.filePath + " modified.");
         }
 
         BufferedWriter bw = new BufferedWriter(new FileWriter(this.filePath));
         for (String sql : this.sqls) {
             bw.write(sql);
             bw.newLine();
+            bw.newLine(); // line breaker, to be more clear
             bw.flush();
         }
         bw.close();

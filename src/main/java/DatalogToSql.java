@@ -21,12 +21,13 @@ public class DatalogToSql {
 
         // translate according to problem types
         System.out.println("--------------Queries translating...--------------");
-        DatalogTranslator datalogTranslator = new DatalogTranslator(problemsAndTypes);
+        DatalogTranslator datalogTranslator = new DatalogTranslator(problemsAndTypes, datalogFileReader.getTNameAndCName());
         datalogTranslator.translate();
+        List<String> results = datalogTranslator.getResults();
 
         // write to files (*.sql)
         System.out.println("--------------SQL file outputting...--------------");
-        DatalogFileWriter datalogFileWriter = new DatalogFileWriter(args[1], queries);
+        DatalogFileWriter datalogFileWriter = new DatalogFileWriter(args[1], results);
         datalogFileWriter.write();
     }
 }
