@@ -20,24 +20,25 @@
 
 目前支持的查询类型：
 
-| 查询类型       | 对应符号   |
-| -------------- | ---------- |
-| 插入           | fact       |
-| 投影           | projection |
-| 选择           | select     |
-| 内连接         | (ij) join  |
-| 全连接         | (fj) join  |
-| 左连接         | (lj) join  |
-| 右连接         | (rj) join  |
-| 并集           | union      |
-| 差集           | difference |
-| 分组（先不管） | groupby    |
+| 查询类型            | 对应符号   |
+| ------------------- | ---------- |
+| 插入                | fact       |
+| 投影                | projection |
+| 选择                | select     |
+| 内连接              | (ij) join  |
+| 全连接              | (fj) join  |
+| 左连接              | (lj) join  |
+| 右连接              | (rj) join  |
+| 并集                | union      |
+| 差集                | difference |
+| 排序                | orderby    |
+| 分组（future work） | groupby    |
 
 
 
 ## DatalogTranslator
 
-TBD
+实现对不同problemType的翻译。
 
 
 

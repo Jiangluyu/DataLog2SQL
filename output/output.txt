@@ -1,0 +1,121 @@
+SELECT cName
+FROM Customer;
+
+Answer:
+
+John	
+Robert	
+Donne	
+---
+SELECT cName, cAge
+FROM Customer;
+
+Answer:
+
+John	17	
+Robert	18	
+Donne	20	
+---
+SELECT c.cName, c.cAge
+FROM Customer c
+WHERE c.cName='John' and c.cAge=17;
+
+Answer:
+
+John	17	
+---
+SELECT c.cName
+FROM Customer c, Selling s
+WHERE c.cName = s.cName and s.sPrice=560;
+
+Answer:
+
+Robert	
+---
+SELECT c.cName, s.sPrice
+FROM Customer c,Selling s
+WHERE c.cName = s.cName;
+
+Answer:
+
+John	75	
+Robert	560	
+---
+SELECT cName
+FROM Customer INNER JOIN Seller
+ON Customer.cName = Seller.sName;
+
+Answer:
+
+Robert	
+Donne	
+---
+SELECT cName
+FROM Customer INNER JOIN Seller
+ON Customer.cName = Seller.sName and Customer.cAge = Seller.sAge;
+
+Answer:
+
+Robert	
+Donne	
+---
+SELECT cName, sName
+FROM Customer LEFT JOIN Seller
+ON Customer.cName = Seller.sName;
+
+Answer:
+
+John	null	
+Robert	Robert	
+Donne	Donne	
+---
+SELECT cName, sName
+FROM Customer RIGHT JOIN Seller
+ON Customer.cName = Seller.sName;
+
+Answer:
+
+null	Jake	
+Robert	Robert	
+Donne	Donne	
+---
+SELECT cName, sName
+FROM Customer FULL JOIN Seller
+ON Customer.cName = Seller.sName;
+
+Answer:
+
+John	null	
+Robert	Robert	
+Donne	Donne	
+null	Jake	
+---
+SELECT cName FROM Customer
+UNION
+SELECT sName FROM Seller;
+
+Answer:
+
+Robert	
+John	
+Donne	
+Jake	
+---
+SELECT cName FROM Customer
+EXCEPT
+SELECT sName FROM Seller;
+
+Answer:
+
+John	
+---
+SELECT cName, cAge
+FROM Customer
+ORDER BY cName DESC, cAge;
+
+Answer:
+
+Robert	18	
+John	17	
+Donne	20	
+---

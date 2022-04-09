@@ -11,7 +11,7 @@ Selling('John', 'Robert', 75).
 Selling('Robert', 'Jake', 560).
 PROJECTION_RULE(cName) :- Customer(cName).
 PROJECTION_RULE2(cName, cAge) :- Customer(cName, cAge).
-SELECTION_RULE1(cName, cAge) :- Customer(cName, cAge), cName = 'Jake', cAge = 23.
+SELECTION_RULE1(cName, cAge) :- Customer(cName, cAge), cName = 'John', cAge = 17.
 SELECTION_RULE2(cName) :- Customer(cName, cAge), Selling(cName, sName, sPrice), sPrice = 560.
 SELECTION_RULE3(cName, sPrice) :- Customer(cName, cAge), Selling(cName, sName, sPrice).
 INNER_JOIN_RULE(cName) :- ij(Customer(cName), Seller(sName), cName = sName).

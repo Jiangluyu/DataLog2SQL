@@ -1,11 +1,10 @@
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 public class DatalogToSql {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, SQLException {
         // read datalog files (*.dl)
         DatalogFileReader datalogFileReader = new DatalogFileReader(args[0]);
         datalogFileReader.read();
@@ -29,7 +28,44 @@ public class DatalogToSql {
 
         // write to files (*.sql)
         System.out.println("--------------SQL file outputting...--------------");
-        DatalogFileWriter datalogFileWriter = new DatalogFileWriter(args[1], results);
+        DatalogFileWriter datalogFileWriter = new DatalogFileWriter(args[1], results, true);
         datalogFileWriter.write();
+
+        String sql;
+        if (!args[2].equals("")) {
+            List<String> sqlResults = new ArrayList<>();
+            sql = "DELETE FROM customer;\nDELETE FROM seller;\nDELETE FROM selling;";
+            SQLResultTracer sqlPrepTemp = new SQLResultTracer(sql);
+            sqlPrepTemp.getStatement().executeUpdate();
+            sqlPrepTemp.close();
+
+            for (String s : results) {
+                if (s.split(" ")[0].equals("INSERT")) {
+                    sql = s;
+                    SQLResultTracer sqlResultTracer = new SQLResultTracer(sql);
+                    sqlResultTracer.getStatement().executeUpdate();
+                    sqlResultTracer.close();
+                } else {
+                    sql = s.split("AS\n")[1];
+                    sqlResults.add(sql);
+                    sqlResults.add("\nAnswer:\n");
+
+                    SQLResultTracer sqlResultTracer = new SQLResultTracer(sql);
+                    ResultSet resultSet = sqlResultTracer.getStatement().executeQuery();
+                    while (resultSet.next()) {
+                        StringBuilder resTemp = new StringBuilder();
+                        for (int i = 1; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                            resTemp.append(resultSet.getString(i)).append('\t');
+                        }
+                        sqlResults.add(resTemp.toString());
+                    }
+                    sqlResults.add("---");
+                    sqlResultTracer.close();
+                }
+            }
+
+            DatalogFileWriter sqlResultFileWriter = new DatalogFileWriter(args[2], sqlResults, false);
+            sqlResultFileWriter.write();
+        }
     }
 }

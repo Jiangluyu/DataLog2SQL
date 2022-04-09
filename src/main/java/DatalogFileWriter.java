@@ -7,10 +7,12 @@ import java.util.List;
 public class DatalogFileWriter {
     private final String filePath;
     private final List<String> sqls;
+    private final Boolean addNewLine;
 
-    DatalogFileWriter(String filePath, List<String> queries) {
+    DatalogFileWriter(String filePath, List<String> queries, Boolean addNewLine) {
         this.filePath = "output/" + filePath;
         this.sqls = queries;
+        this.addNewLine = addNewLine;
     }
 
     public void write() throws IOException {
@@ -32,7 +34,11 @@ public class DatalogFileWriter {
         for (String sql : this.sqls) {
             bw.write(sql);
             bw.newLine();
-            bw.newLine(); // line breaker, to be more clear
+
+            if (this.addNewLine) {
+                bw.newLine(); // line breaker, to be more clear
+            }
+
             bw.flush();
         }
         bw.close();
