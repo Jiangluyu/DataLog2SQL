@@ -19,6 +19,8 @@ public class DatalogProblemTypeParser {
         } else {
             if (joinWords.contains(query.split(":-")[1].split("\\(")[0])) {
                 problemType = "join";
+            } else if (query.contains("order_by")) {
+                problemType = "orderby";
             } else if (query.contains(";")) {
                 problemType = "union";
             } else if (query.contains("group_by")) {

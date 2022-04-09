@@ -4,11 +4,15 @@ INSERT INTO Customer (cName, cAge) VALUES ('Robert', 18);
 
 INSERT INTO Customer (cName, cAge) VALUES ('Donne', 20);
 
-INSERT INTO Seller (sName) VALUES ('Jake');
+INSERT INTO Seller (sName, sAge) VALUES ('Jake', 18);
 
-INSERT INTO Seller (sName) VALUES ('Robert');
+INSERT INTO Seller (sName, sAge) VALUES ('Robert', 18);
 
-INSERT INTO Seller (sName) VALUES ('Donne');
+INSERT INTO Seller (sName, sAge) VALUES ('Donne', 20);
+
+INSERT INTO Selling (cName, sName, sPrice) VALUES ('John', 'Robert', 75);
+
+INSERT INTO Selling (cName, sName, sPrice) VALUES ('Robert', 'Jake', 560);
 
 DROP VIEW IF EXISTS PROJECTION_RULE CASCADE;
 CREATE VIEW PROJECTION_RULE AS
@@ -20,7 +24,23 @@ CREATE VIEW PROJECTION_RULE2 AS
 SELECT cName, cAge
 FROM Customer;
 
-SELECTION_RULE(cName):-Customer(cName),cName='Jake'
+DROP VIEW IF EXISTS SELECTION_RULE1 CASCADE;
+CREATE VIEW SELECTION_RULE1 AS
+SELECT c.cName, c.cAge
+FROM Customer c
+WHERE c.cName='Jake' and c.cAge=23;
+
+DROP VIEW IF EXISTS SELECTION_RULE2 CASCADE;
+CREATE VIEW SELECTION_RULE2 AS
+SELECT c.cName
+FROM Customer c, Selling s
+WHERE c.cName = s.cName and s.sPrice=560;
+
+DROP VIEW IF EXISTS SELECTION_RULE3 CASCADE;
+CREATE VIEW SELECTION_RULE3 AS
+SELECT c.cName, s.sPrice
+FROM Customer c,Selling s
+WHERE c.cName = s.cName;
 
 DROP VIEW IF EXISTS INNER_JOIN_RULE CASCADE;
 CREATE VIEW INNER_JOIN_RULE AS
@@ -52,7 +72,21 @@ SELECT cName, sName
 FROM Customer FULL JOIN Seller
 ON Customer.cName = Seller.sName;
 
-UNION_RULE(cName,sName):-Customer(cName);Seller(sName)
+DROP VIEW IF EXISTS UNION_RULE CASCADE;
+CREATE VIEW UNION_RULE AS
+SELECT cName FROM Customer
+UNION
+SELECT sName FROM Seller;
 
-DIFFERENCE_RULE(cName):-Customer(cName),notSeller(cName)
+DROP VIEW IF EXISTS DIFFERENCE_RULE CASCADE;
+CREATE VIEW DIFFERENCE_RULE AS
+SELECT cName FROM Customer
+EXCEPT
+SELECT sName FROM Seller;
+
+DROP VIEW IF EXISTS PROJECTION_RULE2 CASCADE;
+CREATE VIEW PROJECTION_RULE2 AS
+SELECT cName, cAge
+FROM Customer
+ORDER BY cName DESC, cAge;
 

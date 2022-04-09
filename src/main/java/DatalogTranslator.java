@@ -18,6 +18,9 @@ public class DatalogTranslator {
         Translator translator;
         for (Map.Entry<String, String> currentQuery : this.problemsAndTypes.entrySet()) {
             switch (currentQuery.getValue()) {
+                case "orderby":
+                    translator = new OrderByTranslator();
+                    break;
                 case "join":
                     translator = new JoinTranslator();
                     break;
@@ -122,10 +125,6 @@ public class DatalogTranslator {
                 }
             }
 
-            System.out.println(tables);
-            System.out.println(attrs);
-            System.out.println(conditions);
-
             // construct result
             StringBuilder res = new StringBuilder("DROP VIEW IF EXISTS "
                     + viewName
@@ -164,21 +163,205 @@ public class DatalogTranslator {
     private class UnionTranslator extends Translator {
         @Override
         public String translate(String query) {
-            return query;
+            String unionLeft = query.split(";")[0].split(":-")[1];
+            String unionRight = query.split(";")[1];
+            String viewName = query.split(":-")[0].split("\\(")[0];
+            String selectName1 = unionLeft.split("\\(")[0];
+            String selectPara1 = unionLeft.split("\\(")[1];
+            selectPara1 = selectPara1.substring(0, selectPara1.length()-1);
+            String selectName2 = unionRight.split("\\(")[0];
+            String selectPara2 = unionRight.split("\\(")[1];
+            selectPara2 = selectPara2.substring(0, selectPara1.length());
+            return "DROP VIEW IF EXISTS "
+                    + viewName
+                    + " CASCADE;\nCREATE VIEW "
+                    + viewName
+                    + " AS\nSELECT " +  selectPara1 + " FROM " + selectName1
+                    + "\nUNION"
+                    + "\nSELECT " +  selectPara2 + " FROM " + selectName2 + ";";
         }
     }
 
+    //SELECTION_RULE1(cName, cAge) :- Customer(cName, cAge), cName = 'Jake', cage = 23.
+    //SELECTION_RULE2(cName) :- Customer(cName, cAge), Seller(cName, sName, sPrice), sPrice = 560.
     private class SelectTranslator extends Translator {
         @Override
         public String translate(String query) {
-            return query;
+            // e.g. SELECTION_RULE(cName, c) :- Customer(cName, b, c), cName='Jake'
+            if(query.contains("<") || query.contains(">") || query.contains("=")) {
+                String viewName = query.split(":-")[0].split("\\(")[0];
+                String[] viewPara = query.split(":-")[0].split("\\(")[1].split("\\)")[0].split(",");
+                String[] selectName = query.split(":-")[1].split("=")[0].split("\\),");
+                String selection = query.split(":-")[1];
+                Map<String, String> selectNameAndPara = new HashMap<>();
+                for (int i = 0; i < selectName.length - 1; i++) {
+                    selectNameAndPara.put(selectName[i].split("\\(")[0] + " " + selectName[i].split("\\(")[0].substring(0, 1).toLowerCase(), selectName[i].split("\\(")[1]);
+                }
+                String[] selections = selection.split("\\),");
+                selection = selections[selections.length - 1];
+                String selectNames = "";
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    String name = (String) (selectNameAndPara.keySet().toArray()[i]);
+                    if (i < selectNameAndPara.keySet().size() - 1) selectNames += name + ", ";
+                    else selectNames += name;
+                }
+                String viewParas = "";
+                for (int i = 0; i < viewPara.length; i++) {
+                    String para = viewPara[i];
+                    for (String selectN : selectNameAndPara.keySet()) {
+                        if (selectNameAndPara.get(selectN).contains(para)) {
+                            if (i < viewPara.length - 1)
+                                viewParas += selectN.substring(0, 1).toLowerCase() + "." + para + ", ";
+                            else viewParas += selectN.substring(0, 1).toLowerCase() + "." + para;
+                            break;
+                        }
+                    }
+                }
+                String selectionPlus = "";
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    Object[] selectNameArr = selectNameAndPara.keySet().toArray();
+                    String selectNameCurrent = (String) selectNameArr[i];
+                    String[] selectParaCurrent = selectNameAndPara.get(selectNameCurrent).split(",");
+                    for (int j = i + 1; j < selectNameAndPara.keySet().size(); j++) {
+                        String selectNameNew = (String) selectNameArr[j];
+                        String[] selectParaNew = selectNameAndPara.get(selectNameNew).split(",");
+                        for (String s : selectParaCurrent) {
+                            for (String ss : selectParaNew) {
+                                if (s.equals(ss)) selectionPlus += selectNameCurrent.substring(0, 1).toLowerCase()
+                                        + "." + s + " = " + selectNameNew.substring(0, 1).toLowerCase() + "." + ss + " and ";
+                            }
+                        }
+                    }
+                }
+                StringBuilder selectionResult = new StringBuilder();
+                selections = selection.split(",");
+                int idx = 0;
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    if(idx == selections.length) break;
+                    Object[] selectNameArr = selectNameAndPara.keySet().toArray();
+                    String selectNameCurrent = (String) selectNameArr[i];
+                    String[] selectParaCurrent = selectNameAndPara.get(selectNameCurrent).split(",");
+                    //not perfect->need para in selections to be ordered in each selectPara
+                    for(String s: selectParaCurrent) {
+                        if(selections[idx].contains(s) && idx < selections.length-1) {
+                            selectionResult.append(selectNameCurrent.substring(0, 1).toLowerCase())
+                                    .append(".")
+                                    .append(selections[idx])
+                                    .append(" and ");
+                            idx++;
+                        }
+                        else if(selections[idx].contains(s) && idx == selections.length-1) {
+                            selectionResult.append(selectNameCurrent.substring(0, 1).toLowerCase())
+                                    .append(".")
+                                    .append(selections[idx]);
+                            idx++;
+                        }
+                        if(idx == selections.length) break;
+                    }
+                }
+                return "DROP VIEW IF EXISTS "
+                        + viewName
+                        + " CASCADE;\nCREATE VIEW "
+                        + viewName
+                        + " AS\nSELECT "
+                        +  viewParas
+                        + "\nFROM "
+                        + selectNames
+                        + "\nWHERE "
+                        + selectionPlus + selectionResult
+                        + ";";
+            }
+            else {
+                String viewName = query.split(":-")[0].split("\\(")[0];
+                String[] viewPara = query.split(":-")[0].split("\\(")[1].split("\\)")[0].split(",");
+                String[] selectName = query.split(":-")[1].split("=")[0].split("\\),");
+                Map<String, String> selectNameAndPara = new HashMap<>();
+                for (int i = 0; i < selectName.length; i++) {
+                    selectNameAndPara.put(selectName[i].split("\\(")[0] + " " + selectName[i].split("\\(")[0].substring(0, 1).toLowerCase(), selectName[i].split("\\(")[1]);
+                }
+                StringBuilder selectNames = new StringBuilder();
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    String name = (String) (selectNameAndPara.keySet().toArray()[i]);
+                    if (i < selectNameAndPara.keySet().size() - 1) selectNames.append(name).append(',');
+                    else selectNames.append(name);
+                }
+                StringBuilder viewParas = new StringBuilder();
+                for (int i = 0; i < viewPara.length; i++) {
+                    String para = viewPara[i];
+                    for (String selectN : selectNameAndPara.keySet()) {
+                        if (selectNameAndPara.get(selectN).contains(para)) {
+                            if (i < viewPara.length - 1)
+                                viewParas.append(selectN.substring(0, 1).toLowerCase())
+                                        .append(".")
+                                        .append(para)
+                                        .append(", ");
+                            else viewParas.append(selectN.substring(0, 1).toLowerCase())
+                                    .append(".")
+                                    .append(para);
+                            break;
+                        }
+                    }
+                }
+                StringBuilder selectionPlus = new StringBuilder();
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    Object[] selectNameArr = selectNameAndPara.keySet().toArray();
+                    String selectNameCurrent = (String) selectNameArr[i];
+                    String[] selectParaCurrent = selectNameAndPara.get(selectNameCurrent).split(",");
+                    for (int j = i + 1; j < selectNameAndPara.keySet().size(); j++) {
+                        String selectNameNew = (String) selectNameArr[j];
+                        String[] selectParaNew = selectNameAndPara.get(selectNameNew).split(",");
+                        for (String s : selectParaCurrent) {
+                            for (String ss : selectParaNew) {
+                                if (s.equals(ss)) {
+                                    selectionPlus.append(selectNameCurrent.substring(0, 1).toLowerCase())
+                                            .append(".")
+                                            .append(s)
+                                            .append(" = ")
+                                            .append(selectNameNew.substring(0, 1).toLowerCase())
+                                            .append(".")
+                                            .append(ss)
+                                            .append(",");
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return "DROP VIEW IF EXISTS "
+                        + viewName
+                        + " CASCADE;\nCREATE VIEW "
+                        + viewName
+                        + " AS\nSELECT "
+                        +  viewParas
+                        + "\nFROM "
+                        + selectNames
+                        + "\nWHERE "
+                        + selectionPlus.substring(0, selectionPlus.length()-1)
+                        + ";";
+            }
         }
     }
+
 
     private class DifferenceTranslator extends Translator {
         @Override
         public String translate(String query) {
-            return query;
+            String notLeft = query.split(",not")[0].split(":-")[1];
+            String notRight = query.split("not")[1];
+            String viewName = query.split(":-")[0].split("\\(")[0];
+            String selectName1 = notLeft.split("\\(")[0];
+            String selectPara1 = notLeft.split("\\(")[1];
+            selectPara1 = selectPara1.substring(0, selectPara1.length()-1);
+            String selectName2 = notRight.split("\\(")[0];
+            String selectPara2 = notRight.split("\\(")[1];
+            selectPara2 = selectPara2.substring(0, selectPara1.length());
+            return "DROP VIEW IF EXISTS "
+                    + viewName
+                    + " CASCADE;\nCREATE VIEW "
+                    + viewName
+                    + " AS\nSELECT " +  selectPara1 + " FROM " + selectName1
+                    + "\nEXCEPT"
+                    + "\nSELECT " +  selectPara2 + " FROM " + selectName2 + ";";
         }
     }
 
@@ -194,6 +377,63 @@ public class DatalogTranslator {
                     + ") VALUES ("
                     + query.split("\\(")[1].replaceAll(",", ", ")
                     + ";";
+        }
+    }
+
+    private class OrderByTranslator extends Translator {
+        @Override
+        public String translate(String query) {
+            // find query head
+            String queryBody = query.split(":-")[1];
+
+            Pattern p = Pattern.compile("\\w+\\([\\w,]+\\)");
+            Matcher m = p.matcher(queryBody);
+
+            String subQueryHead = "";
+            if (m.find()) {
+                subQueryHead = queryBody.substring(m.start(), m.end());
+            }
+
+            // find order by keys
+            List<String> orderByKeys = Arrays.asList(
+                    queryBody.split(",\\[")[1]
+                    .replaceAll("]", "")
+                    .split(",")
+            );
+
+            // find order by criteria
+            List<String> orderByCriteria = Arrays.asList(
+                    queryBody.split(",\\[")[2]
+                            .replaceAll("]\\)", "")
+                            .split(",")
+            );
+
+            StringBuilder res = new StringBuilder();
+            int index = 0;
+
+            for (Map.Entry<String, String> entry : DatalogTranslator.this.problemsAndTypes.entrySet()) {
+                if (entry.getKey().split(":-")[0].equals(subQueryHead)) {
+                    String oldRes = DatalogTranslator.this.results.get(index);
+                    res = new StringBuilder(oldRes.substring(0, oldRes.length() - 1));
+                    break;
+                }
+                index += 1;
+            }
+
+            res.append("\nORDER BY ");
+            for (int i = 0; i < orderByKeys.size(); i++) {
+                res.append(orderByKeys.get(i));
+                if (orderByCriteria.get(i).equals("D")) {
+                    res.append(" DESC");
+                }
+
+                if (i < orderByKeys.size() - 1) {
+                    res.append(", ");
+                }
+            }
+
+            res.append(";");
+            return res.toString();
         }
     }
 }
