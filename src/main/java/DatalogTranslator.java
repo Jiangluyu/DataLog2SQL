@@ -166,7 +166,22 @@ public class DatalogTranslator {
     private class UnionTranslator extends Translator {
         @Override
         public String translate(String query) {
-            return query;
+            String unionLeft = query.split(";")[0].split(":-")[1];
+            String unionRight = query.split(";")[1];
+            String viewName = query.split(":-")[0].split("\\(")[0];
+            String selectName1 = unionLeft.split("\\(")[0];
+            String selectPara1 = unionLeft.split("\\(")[1];
+            selectPara1 = selectPara1.substring(0, selectPara1.length()-1);
+            String selectName2 = unionRight.split("\\(")[0];
+            String selectPara2 = unionRight.split("\\(")[1];
+            selectPara2 = selectPara2.substring(0, selectPara1.length());
+            return "DROP VIEW IF EXISTS "
+                    + viewName
+                    + " CASCADE;\nCREATE VIEW "
+                    + viewName
+                    + " AS\nSELECT " +  selectPara1 + " FROM " + selectName1
+                    + "\nUNION"
+                    + "\nSELECT " +  selectPara2 + " FROM " + selectName2 + ";";
         }
     }
 
@@ -314,7 +329,22 @@ public class DatalogTranslator {
     private class DifferenceTranslator extends Translator {
         @Override
         public String translate(String query) {
-            return query;
+            String notLeft = query.split(",not")[0].split(":-")[1];
+            String notRight = query.split("not")[1];
+            String viewName = query.split(":-")[0].split("\\(")[0];
+            String selectName1 = notLeft.split("\\(")[0];
+            String selectPara1 = notLeft.split("\\(")[1];
+            selectPara1 = selectPara1.substring(0, selectPara1.length()-1);
+            String selectName2 = notRight.split("\\(")[0];
+            String selectPara2 = notRight.split("\\(")[1];
+            selectPara2 = selectPara2.substring(0, selectPara1.length());
+            return "DROP VIEW IF EXISTS "
+                    + viewName
+                    + " CASCADE;\nCREATE VIEW "
+                    + viewName
+                    + " AS\nSELECT " +  selectPara1 + " FROM " + selectName1
+                    + "\nEXCEPT"
+                    + "\nSELECT " +  selectPara2 + " FROM " + selectName2 + ";";
         }
     }
 

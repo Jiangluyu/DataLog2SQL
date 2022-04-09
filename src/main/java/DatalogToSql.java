@@ -6,7 +6,7 @@ public class DatalogToSql {
     public static void main(String[] args) throws IOException {
         // read datalog files (*.dl)
         String input = "input.dl";
-        String output = "output.dl";
+        String output = "output.sql";
         DatalogFileReader datalogFileReader = new DatalogFileReader(input);
         datalogFileReader.read();
         List<String> queries = datalogFileReader.getQueryToConvert();
