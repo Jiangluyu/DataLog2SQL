@@ -1,3 +1,5 @@
+import com.sun.source.tree.WhileLoopTree;
+
 import java.util.*;
 
 public class DatalogTranslator {
@@ -88,10 +90,144 @@ public class DatalogTranslator {
         }
     }
 
+    //SELECTION_RULE1(cName, cAge) :- Customer(cName, cAge), cName = 'Jake', cage = 23.
+    //SELECTION_RULE2(cName) :- Customer(cName, cAge), Seller(cName, sName, sPrice), sPrice = 560.
     private class SelectTranslator extends Translator {
         @Override
         public String translate(String query) {
-            return query;
+            // e.g. SELECTION_RULE(cName, c) :- Customer(cName, b, c), cName='Jake'
+            if(query.contains("<") || query.contains(">") || query.contains("=")) {
+                String viewName = query.split(":-")[0].split("\\(")[0];
+                String[] viewPara = query.split(":-")[0].split("\\(")[1].split("\\)")[0].split(",");
+                String[] selectName = query.split(":-")[1].split("=")[0].split("\\),");
+                String selection = query.split(":-")[1];
+                Map<String, String> selectNameAndPara = new HashMap<>();
+                for (int i = 0; i < selectName.length - 1; i++) {
+                    selectNameAndPara.put(selectName[i].split("\\(")[0] + " " + selectName[i].split("\\(")[0].substring(0, 1).toLowerCase(), selectName[i].split("\\(")[1]);
+                }
+                String[] selections = selection.split("\\),");
+                selection = selections[selections.length - 1];
+                String selectNames = "";
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    String name = (String) (selectNameAndPara.keySet().toArray()[i]);
+                    if (i < selectNameAndPara.keySet().size() - 1) selectNames += name + ',';
+                    else selectNames += name;
+                }
+                String viewParas = "";
+                for (int i = 0; i < viewPara.length; i++) {
+                    String para = viewPara[i];
+                    for (String selectN : selectNameAndPara.keySet()) {
+                        if (selectNameAndPara.get(selectN).contains(para)) {
+                            if (i < viewPara.length - 1)
+                                viewParas += selectN.substring(0, 1).toLowerCase() + "." + para + ", ";
+                            else viewParas += selectN.substring(0, 1).toLowerCase() + "." + para;
+                            break;
+                        }
+                    }
+                }
+                String selectionPlus = "";
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    Object[] selectNameArr = selectNameAndPara.keySet().toArray();
+                    String selectNameCurrent = (String) selectNameArr[i];
+                    String[] selectParaCurrent = selectNameAndPara.get(selectNameCurrent).split(",");
+                    for (int j = i + 1; j < selectNameAndPara.keySet().size(); j++) {
+                        String selectNameNew = (String) selectNameArr[j];
+                        String[] selectParaNew = selectNameAndPara.get(selectNameNew).split(",");
+                        for (String s : selectParaCurrent) {
+                            for (String ss : selectParaNew) {
+                                if (s.equals(ss)) selectionPlus += selectNameCurrent.substring(0, 1).toLowerCase()
+                                        + "." + s + "=" + selectNameNew.substring(0, 1).toLowerCase() + "." + ss + ",";
+                            }
+                        }
+                    }
+                }
+                String selectionResult = "";
+                selections = selection.split(",");
+                int idx = 0;
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    if(idx == selections.length) break;
+                    Object[] selectNameArr = selectNameAndPara.keySet().toArray();
+                    String selectNameCurrent = (String) selectNameArr[i];
+                    String[] selectParaCurrent = selectNameAndPara.get(selectNameCurrent).split(",");
+                    //not perfect->need para in selections to be ordered in each selectPara
+                    for(String s: selectParaCurrent) {
+                        if(selections[idx].contains(s) && idx<selections.length-1) {
+                            selectionResult += selectNameCurrent.substring(0,1).toLowerCase() + "." + selections[idx] + ",";
+                            idx++;
+                        }
+                        else if(selections[idx].contains(s) && idx==selections.length-1) {
+                            selectionResult += selectNameCurrent.substring(0, 1).toLowerCase() + "." + selections[idx];
+                            idx++;
+                        }
+                        if(idx == selections.length) break;
+                    }
+                }
+                return "DROP VIEW IF EXISTS "
+                        + viewName
+                        + " CASCADE;\nCREATE VIEW "
+                        + viewName
+                        + " AS\nSELECT "
+                        +  viewParas
+                        + "\nFROM "
+                        + selectNames
+                        + "\nWHERE "
+                        + selectionPlus + selectionResult
+                        + ";";
+            }
+            else {
+                String viewName = query.split(":-")[0].split("\\(")[0];
+                String[] viewPara = query.split(":-")[0].split("\\(")[1].split("\\)")[0].split(",");
+                String[] selectName = query.split(":-")[1].split("=")[0].split("\\),");
+                Map<String, String> selectNameAndPara = new HashMap<>();
+                for (int i = 0; i < selectName.length; i++) {
+                    selectNameAndPara.put(selectName[i].split("\\(")[0] + " " + selectName[i].split("\\(")[0].substring(0, 1).toLowerCase(), selectName[i].split("\\(")[1]);
+                }
+                String selectNames = "";
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    String name = (String) (selectNameAndPara.keySet().toArray()[i]);
+                    if (i < selectNameAndPara.keySet().size() - 1) selectNames += name + ',';
+                    else selectNames += name;
+                }
+                String viewParas = "";
+                for (int i = 0; i < viewPara.length; i++) {
+                    String para = viewPara[i];
+                    for (String selectN : selectNameAndPara.keySet()) {
+                        if (selectNameAndPara.get(selectN).contains(para)) {
+                            if (i < viewPara.length - 1)
+                                viewParas += selectN.substring(0, 1).toLowerCase() + "." + para + ", ";
+                            else viewParas += selectN.substring(0, 1).toLowerCase() + "." + para;
+                            break;
+                        }
+                    }
+                }
+                String selectionPlus = "";
+                for (int i = 0; i < selectNameAndPara.keySet().size(); i++) {
+                    Object[] selectNameArr = selectNameAndPara.keySet().toArray();
+                    String selectNameCurrent = (String) selectNameArr[i];
+                    String[] selectParaCurrent = selectNameAndPara.get(selectNameCurrent).split(",");
+                    for (int j = i + 1; j < selectNameAndPara.keySet().size(); j++) {
+                        String selectNameNew = (String) selectNameArr[j];
+                        String[] selectParaNew = selectNameAndPara.get(selectNameNew).split(",");
+                        for (String s : selectParaCurrent) {
+                            for (String ss : selectParaNew) {
+                                if (s.equals(ss)) selectionPlus += selectNameCurrent.substring(0, 1).toLowerCase()
+                                        + "." + s + "=" + selectNameNew.substring(0, 1).toLowerCase() + "." + ss + ",";
+                            }
+                        }
+                    }
+                }
+                return "DROP VIEW IF EXISTS "
+                        + viewName
+                        + " CASCADE;\nCREATE VIEW "
+                        + viewName
+                        + " AS\nSELECT "
+                        +  viewParas
+                        + "\nFROM "
+                        + selectNames
+                        + "\nWHERE "
+                        + selectionPlus.substring(0, selectionPlus.length()-1)
+                        + ";";
+            }
         }
     }
 

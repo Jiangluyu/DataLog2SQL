@@ -5,10 +5,12 @@ import java.util.List;
 public class DatalogToSql {
     public static void main(String[] args) throws IOException {
         // read datalog files (*.dl)
-        DatalogFileReader datalogFileReader = new DatalogFileReader(args[0]);
+        String input = "input.dl";
+        String output = "output.dl";
+        DatalogFileReader datalogFileReader = new DatalogFileReader(input);
         datalogFileReader.read();
         List<String> queries = datalogFileReader.getQueryToConvert();
-        System.out.println("--------------Information from file " + args[0] + "--------------");
+        System.out.println("--------------Information from file " + input + "--------------");
         System.out.println(datalogFileReader.getQueryToConvert());
         System.out.println(datalogFileReader.getTNameAndAttrNum());
         System.out.println(datalogFileReader.getTNameAndCName());
@@ -27,7 +29,7 @@ public class DatalogToSql {
 
         // write to files (*.sql)
         System.out.println("--------------SQL file outputting...--------------");
-        DatalogFileWriter datalogFileWriter = new DatalogFileWriter(args[1], results);
+        DatalogFileWriter datalogFileWriter = new DatalogFileWriter(output, results);
         datalogFileWriter.write();
     }
 }

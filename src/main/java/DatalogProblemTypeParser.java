@@ -23,10 +23,10 @@ public class DatalogProblemTypeParser {
                 problemType = "union";
             } else if (query.contains("group_by")) {
                 problemType = "groupby";
-            } else if (query.contains("<") || query.contains(">") || query.contains("=")) {
-                problemType = "select";
             } else if (query.contains("not")) {
                 problemType = "difference";
+            } else if (query.contains("<") || query.contains(">") || query.contains("=") || query.contains("),")) {
+                problemType = "select";
             } else {
                 problemType = "projection";
             }
