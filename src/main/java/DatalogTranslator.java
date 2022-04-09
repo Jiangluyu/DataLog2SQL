@@ -47,19 +47,6 @@ public class DatalogTranslator {
         return this.results;
     }
 
-//    private int count(String s, char ch) {
-//        HashMap<Character, Integer> charRefs = new HashMap<>();
-//        for (int i = 0; i < s.length(); i++) {
-//            if (!charRefs.containsKey(s.charAt(i))) {
-//                charRefs.put(s.charAt(i), 1);
-//            } else {
-//                charRefs.put(s.charAt(i), charRefs.get(s.charAt(i)) + 1);
-//            }
-//        }
-//
-//        return charRefs.getOrDefault(ch, 0);
-//    }
-
     private abstract class Translator {
         public abstract String translate(String query);
     }
