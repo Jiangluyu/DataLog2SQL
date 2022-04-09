@@ -1,6 +1,8 @@
 import com.sun.source.tree.WhileLoopTree;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DatalogTranslator {
     private final LinkedHashMap<String, String> problemsAndTypes;
@@ -70,6 +72,7 @@ public class DatalogTranslator {
 
     private class JoinTranslator extends Translator {
         @Override
+        // e.g. INNER_JOIN_RULE(cName) :- ij(Customer(cName, cAge), Seller(sName, sAge), cName = sName, cAge = sAge).
         public String translate(String query) {
             String joinType = query.split(":-")[1].split("\\(")[0];
             Map<String, String> joinTypesMap = new HashMap<>() {{
@@ -79,7 +82,84 @@ public class DatalogTranslator {
                 put("rj", "RIGHT JOIN");
             }};
 
-            return query;
+            List<String> selectedAttrs = new ArrayList<>();
+            List<String> tables = new ArrayList<>();
+            List<List<String>> attrs = new ArrayList<>();
+            List<String> conditions = new ArrayList<>();
+
+            String viewName = query.split(":-")[0].split("\\(")[0];
+            String queryRule = query.split(":-")[0].split("\\(")[1].replaceAll("\\)", "");
+            String queryBody = query.split(":-")[1].substring(2);
+
+            // find all attrs in query rule
+            Collections.addAll(selectedAttrs, queryRule.split(","));
+
+            // find all attributes
+            Pattern p = Pattern.compile("(\\([^()]*)\\w+([^()]*\\))");
+            Matcher m = p.matcher(queryBody);
+
+            while (m.find()) {
+                attrs.add(Arrays.asList(queryBody.substring(m.start(), m.end()).replaceAll("[()*]", "").split(",")));
+            }
+
+            // find all table names
+            p = Pattern.compile("\\w+\\(");
+            m = p.matcher(queryBody);
+
+            while (m.find()) {
+                tables.add(queryBody.substring(m.start(), m.end()).replaceAll("\\(", ""));
+            }
+
+            // find all conditions
+            for (String sentence : queryBody.split(",")) {
+                if (!(sentence.contains("(") && sentence.contains(")")) && sentence.contains("=")) {
+                    conditions.add(sentence.replaceAll("[()*]", ""));
+                }
+            }
+
+            // update attribute names (add namespace)
+            for (int i = 0; i < attrs.size(); i++) {
+                for (int j = 0; j < attrs.get(i).size(); j++) {
+                    attrs.get(i).set(j, tables.get(i) + "." + attrs.get(i).get(j));
+                }
+            }
+
+            System.out.println(tables);
+            System.out.println(attrs);
+            System.out.println(conditions);
+
+            // construct result
+            StringBuilder res = new StringBuilder("DROP VIEW IF EXISTS "
+                    + viewName
+                    + " CASCADE;\nCREATE VIEW "
+                    + viewName
+                    + " AS\nSELECT "
+                    + String.join(", ", selectedAttrs));
+
+            res.append("\nFROM ").append(tables.get(0))
+                    .append(" ")
+                    .append(joinTypesMap.get(joinType))
+                    .append(" ")
+                    .append(tables.get(1))
+                    .append("\n")
+                    .append("ON ");
+
+            for (int i = 0; i < conditions.size(); i++) {
+                List<String> conditionList = Arrays.asList(conditions.get(i).split("="));
+                res.append(tables.get(0))
+                        .append(".")
+                        .append(conditionList.get(0))
+                        .append(" = ").append(tables.get(1))
+                        .append(".")
+                        .append(conditionList.get(1));
+                if (i < conditions.size() - 1) {
+                    res.append(" and ");
+                }
+            }
+
+            res.append(";");
+
+            return res.toString();
         }
     }
 
