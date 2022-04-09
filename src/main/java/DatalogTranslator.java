@@ -93,11 +93,13 @@ public class DatalogTranslator {
                 put("rj", "RIGHT JOIN");
             }};
 
+            List<String> selectedAttrs = new ArrayList<>();
             List<String> tables = new ArrayList<>();
             List<List<String>> attrs = new ArrayList<>();
             List<String> conditions = new ArrayList<>();
 
             String viewName = query.split(":-")[0].split("\\(")[0];
+            String queryRule = query.split(":-")[0].split("\\(")[1].replaceAll("\\)")
             String queryBody = query.split(":-")[1].substring(2);
 
             // find all attributes
@@ -151,7 +153,7 @@ public class DatalogTranslator {
 
             res.append("\nFROM ").append(tables.get(0))
                     .append(" ")
-                    .append(joinTypesMap.get(query.split(":-")[1].split("\\(")[0]))
+                    .append(joinTypesMap.get(joinType))
                     .append(" ")
                     .append(tables.get(1))
                     .append("\n")

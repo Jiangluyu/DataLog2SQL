@@ -25,7 +25,7 @@ public class DatalogProblemTypeParser {
                 problemType = "groupby";
             } else if (query.contains("not")) {
                 problemType = "difference";
-            } else if (query.contains("<") || query.contains(">") || query.contains("=") || query.contains(",")) {
+            } else if (query.contains("<") || query.contains(">") || query.contains("=") || query.contains("),")) {
                 problemType = "select";
             } else {
                 problemType = "projection";
