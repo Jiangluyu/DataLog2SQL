@@ -40,14 +40,16 @@
 
 实现对不同problemType的翻译。
 
-
-
 ## DatalogFileWriter
 
 向output/args[1]写入文件。
 
+## SQLResultTracer
 
+执行翻译后的SQL并将结果保存至args[2]（如果该参数不存在则不执行SQL）
 
 ## DatalogToSql
 
 main函数，负责工作流。
+
+
