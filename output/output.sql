@@ -22,13 +22,35 @@ FROM Customer;
 
 SELECTION_RULE(cName):-Customer(cName),cName='Jake'
 
-INNER_JOIN_RULE(cName):-ij(Customer(cName),Seller(sName),cName=sName)
+DROP VIEW IF EXISTS INNER_JOIN_RULE CASCADE;
+CREATE VIEW INNER_JOIN_RULE AS
+SELECT Customer.cName, Seller.sName
+FROM Customer INNER JOIN Seller
+ON Customer.cName = Seller.sName;
 
-LEFT_JOIN_RULE(cName,sName):-lj(Customer(cName),Seller(sName),cName=sName)
+DROP VIEW IF EXISTS INNER_JOIN_RULE2 CASCADE;
+CREATE VIEW INNER_JOIN_RULE2 AS
+SELECT Customer.cName, Customer.cAge, Seller.sName, Seller.sAge
+FROM Customer INNER JOIN Seller
+ON Customer.cName = Seller.sName and Customer.cAge = Seller.sAge;
 
-RIGHT_JOIN_RULE(cName,sName):-rj(Customer(cName),Seller(sName),cName=sName)
+DROP VIEW IF EXISTS LEFT_JOIN_RULE CASCADE;
+CREATE VIEW LEFT_JOIN_RULE AS
+SELECT Customer.cName, Seller.sName
+FROM Customer LEFT JOIN Seller
+ON Customer.cName = Seller.sName;
 
-FULL_JOIN_RULE(cName,sName):-fj(Customer(cName),Seller(sName),cName=sName)
+DROP VIEW IF EXISTS RIGHT_JOIN_RULE CASCADE;
+CREATE VIEW RIGHT_JOIN_RULE AS
+SELECT Customer.cName, Seller.sName
+FROM Customer RIGHT JOIN Seller
+ON Customer.cName = Seller.sName;
+
+DROP VIEW IF EXISTS FULL_JOIN_RULE CASCADE;
+CREATE VIEW FULL_JOIN_RULE AS
+SELECT Customer.cName, Seller.sName
+FROM Customer FULL JOIN Seller
+ON Customer.cName = Seller.sName;
 
 UNION_RULE(cName,sName):-Customer(cName);Seller(sName)
 
