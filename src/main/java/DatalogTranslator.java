@@ -99,8 +99,11 @@ public class DatalogTranslator {
             List<String> conditions = new ArrayList<>();
 
             String viewName = query.split(":-")[0].split("\\(")[0];
-            String queryRule = query.split(":-")[0].split("\\(")[1].replaceAll("\\)")
+            String queryRule = query.split(":-")[0].split("\\(")[1].replaceAll("\\)", "");
             String queryBody = query.split(":-")[1].substring(2);
+
+            // find all attrs in query rule
+            Collections.addAll(selectedAttrs, queryRule.split(","));
 
             // find all attributes
             Pattern p = Pattern.compile("(\\([^()]*)\\w+([^()]*\\))");
@@ -141,15 +144,8 @@ public class DatalogTranslator {
                     + viewName
                     + " CASCADE;\nCREATE VIEW "
                     + viewName
-                    + " AS\nSELECT ");
-
-            res.append(query.split(":-")[0]);
-//            for (int i = 0; i < attrs.size(); i++) {
-//                res.append(String.join(", ", attrs.get(i)));
-//                if (i < attrs.size() - 1) {
-//                    res.append(", ");
-//                }
-//            }
+                    + " AS\nSELECT "
+                    + String.join(", ", selectedAttrs));
 
             res.append("\nFROM ").append(tables.get(0))
                     .append(" ")
